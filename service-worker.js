@@ -1,26 +1,36 @@
-const CACHE_NAME = "todo-app-cache-v1";
-const URLS_TO_CACHE = [
+const CACHE_NAME = "todo-cache-v1";
+const FILES_TO_CACHE = [
   "/",
   "/index.html",
   "/styles.css",
   "/script.js"
 ];
 
-// Install
 self.addEventListener("install", event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(URLS_TO_CACHE);
+      console.log("Caching app shell");
+      return cache.addAll(FILES_TO_CACHE);
     })
   );
+  self.skipWaiting();
 });
 
-// Activate
 self.addEventListener("activate", event => {
-  console.log("Service Worker activated");
+  event.waitUntil(
+    caches.keys().then(keyList =>
+      Promise.all(
+        keyList.map(key => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
+      )
+    )
+  );
+  self.clients.claim();
 });
 
-// Fetch
 self.addEventListener("fetch", event => {
   event.respondWith(
     caches.match(event.request).then(response => {
